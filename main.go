@@ -12,7 +12,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/route53"
 )
 
-func upsertRecode(name, rType, ipAddr, zoneID string) {
+func upsertRecode(name, ipAddr, zoneID string) {
 	sess := session.Must(session.NewSession())
 	svc := route53.New(sess)
 
@@ -22,8 +22,8 @@ func upsertRecode(name, rType, ipAddr, zoneID string) {
 				{ // Required
 					Action: aws.String("UPSERT"), // Required
 					ResourceRecordSet: &route53.ResourceRecordSet{ // Required
-						Name: aws.String(name),  // Required
-						Type: aws.String(rType), // Required
+						Name: aws.String(name), // Required
+						Type: aws.String("A"),  // Required
 						TTL:  aws.Int64(600),
 						ResourceRecords: []*route53.ResourceRecord{
 							{ // Required
@@ -49,15 +49,13 @@ func upsertRecode(name, rType, ipAddr, zoneID string) {
 func main() {
 	var (
 		name   string
-		rType  string
 		ipAddr string
 		zoneID string
 	)
 	flag.StringVar(&name, "name", "", "domain name")
-	flag.StringVar(&rType, "type", "", "record type")
 	flag.StringVar(&ipAddr, "ip", "", "ip address")
 	flag.StringVar(&zoneID, "zone_id", "", "zone id")
 	flag.Parse()
 
-	upsertRecode(name, rType, ipAddr, zoneID)
+	upsertRecode(name, ipAddr, zoneID)
 }
