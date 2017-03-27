@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 
 	_ "github.com/urfave/cli"
@@ -11,7 +12,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/route53"
 )
 
-func main() {
+func upsertRecode(name, rType, ipAddr, zoneID string) {
 	sess := session.Must(session.NewSession())
 	svc := route53.New(sess)
 
@@ -21,12 +22,12 @@ func main() {
 				{ // Required
 					Action: aws.String("UPSERT"), // Required
 					ResourceRecordSet: &route53.ResourceRecordSet{ // Required
-						Name: aws.String("demo.fulldrive.jp."), // Required
-						Type: aws.String("A"),                  // Required
+						Name: aws.String(name),  // Required
+						Type: aws.String(rType), // Required
 						TTL:  aws.Int64(600),
 						ResourceRecords: []*route53.ResourceRecord{
 							{ // Required
-								Value: aws.String("127.0.0.1"), // Required
+								Value: aws.String(ipAddr), // Required
 							},
 						},
 					},
@@ -34,13 +35,29 @@ func main() {
 			},
 			Comment: aws.String("Changed by dynamic-route53"),
 		},
-		HostedZoneId: aws.String("Z1UTTJQH9J2GW1"),
+		HostedZoneId: aws.String(zoneID),
 	}
 
-	resp, err := svc.ChangeResourceRecordSets(params)
+	_, err := svc.ChangeResourceRecordSets(params)
 	if err != nil {
 		fmt.Println(err.Error())
 		return
 	}
-	fmt.Println(resp)
+	return
+}
+
+func main() {
+	var (
+		name   string
+		rType  string
+		ipAddr string
+		zoneID string
+	)
+	flag.StringVar(&name, "name", "", "domain name")
+	flag.StringVar(&rType, "type", "", "record type")
+	flag.StringVar(&ipAddr, "ip", "", "ip address")
+	flag.StringVar(&zoneID, "zone_id", "", "zone id")
+	flag.Parse()
+
+	upsertRecode(name, rType, ipAddr, zoneID)
 }
