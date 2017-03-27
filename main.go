@@ -3,6 +3,9 @@ package main
 import (
 	"flag"
 	"fmt"
+	"io/ioutil"
+	"net/http"
+	"os"
 
 	_ "github.com/urfave/cli"
 
@@ -11,6 +14,14 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/route53"
 )
+
+func checkCurrentIP() string {
+	resp, _ := http.Get("http://checkip.amazonaws.com")
+	defer resp.Body.Close()
+
+	byteArray, _ := ioutil.ReadAll(resp.Body)
+	return string(byteArray)
+}
 
 func upsertRecode(name, ipAddr, zoneID string) {
 	sess := session.Must(session.NewSession())
@@ -56,6 +67,12 @@ func main() {
 	flag.StringVar(&ipAddr, "ip", "", "ip address")
 	flag.StringVar(&zoneID, "zone_id", "", "zone id")
 	flag.Parse()
+
+	currentIP := checkCurrentIP()
+
+	if currentIP == ipAddr {
+		os.Exit(1)
+	}
 
 	upsertRecode(name, ipAddr, zoneID)
 }
