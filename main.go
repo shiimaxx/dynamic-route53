@@ -44,7 +44,7 @@ func checkCurrentIP() string {
 	return string(byteArray)
 }
 
-func upsertRecode(name, ipAddr, zoneID string) {
+func upsertRecode(name, currentIP, zoneID string) {
 	sess := session.Must(session.NewSession())
 	svc := route53.New(sess)
 
@@ -59,7 +59,7 @@ func upsertRecode(name, ipAddr, zoneID string) {
 						TTL:  aws.Int64(600),
 						ResourceRecords: []*route53.ResourceRecord{
 							{ // Required
-								Value: aws.String(ipAddr), // Required
+								Value: aws.String(currentIP), // Required
 							},
 						},
 					},
@@ -81,11 +81,9 @@ func upsertRecode(name, ipAddr, zoneID string) {
 func main() {
 	var (
 		name   string
-		ipAddr string
 		zoneID string
 	)
 	flag.StringVar(&name, "name", "", "domain name")
-	flag.StringVar(&ipAddr, "ip", "", "ip address")
 	flag.StringVar(&zoneID, "zone_id", "", "zone id")
 	flag.Parse()
 
@@ -99,5 +97,5 @@ func main() {
 		os.Exit(0)
 	}
 
-	upsertRecode(name, ipAddr, zoneID)
+	upsertRecode(name, currentIP, zoneID)
 }
