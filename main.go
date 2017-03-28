@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
+	"strings"
 
 	_ "github.com/urfave/cli"
 
@@ -14,6 +15,26 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/route53"
 )
+
+func checkCurrentRecode(name, zoneID string) string {
+	sess := session.Must(session.NewSession())
+	svc := route53.New(sess)
+
+	params := &route53.ListResourceRecordSetsInput{
+		HostedZoneId:    aws.String(zoneID), // Required
+		MaxItems:        aws.String("1"),
+		StartRecordName: aws.String(name),
+		StartRecordType: aws.String("A"),
+	}
+	resp, err := svc.ListResourceRecordSets(params)
+
+	if err != nil {
+		fmt.Println(err.Error())
+		return ""
+	}
+
+	return *resp.ResourceRecordSets[0].ResourceRecords[0].Value
+}
 
 func checkCurrentIP() string {
 	resp, _ := http.Get("http://checkip.amazonaws.com")
@@ -69,9 +90,13 @@ func main() {
 	flag.Parse()
 
 	currentIP := checkCurrentIP()
+	currentIP = strings.TrimRight(currentIP, "\n")
 
-	if currentIP == ipAddr {
-		os.Exit(1)
+	currentRecode := checkCurrentRecode(name, zoneID)
+	currentRecode = strings.TrimRight(currentRecode, "\n")
+
+	if currentIP == currentRecode {
+		os.Exit(0)
 	}
 
 	upsertRecode(name, ipAddr, zoneID)
