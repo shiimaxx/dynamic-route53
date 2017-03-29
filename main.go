@@ -13,7 +13,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/route53"
 )
 
-func checkCurrentRecode(name, zoneID string) string {
+func checkCurrentRecode(name, zoneID string) (string, int64) {
 	sess := session.Must(session.NewSession())
 	svc := route53.New(sess)
 
@@ -27,10 +27,10 @@ func checkCurrentRecode(name, zoneID string) string {
 
 	if err != nil {
 		fmt.Println(err.Error())
-		return ""
+		return "", 0
 	}
 
-	return *resp.ResourceRecordSets[0].ResourceRecords[0].Value
+	return *resp.ResourceRecordSets[0].ResourceRecords[0].Value, *resp.ResourceRecordSets[0].TTL
 }
 
 func checkCurrentIP() string {
@@ -41,7 +41,7 @@ func checkCurrentIP() string {
 	return string(byteArray)
 }
 
-func upsertRecode(name, currentIP, zoneID string) {
+func upsertRecode(name, currentIP, zoneID string, currentTTL int64) {
 	sess := session.Must(session.NewSession())
 	svc := route53.New(sess)
 
@@ -53,7 +53,7 @@ func upsertRecode(name, currentIP, zoneID string) {
 					ResourceRecordSet: &route53.ResourceRecordSet{ // Required
 						Name: aws.String(name), // Required
 						Type: aws.String("A"),  // Required
-						TTL:  aws.Int64(600),
+						TTL:  aws.Int64(currentTTL),
 						ResourceRecords: []*route53.ResourceRecord{
 							{ // Required
 								Value: aws.String(currentIP), // Required
@@ -87,12 +87,12 @@ func main() {
 	currentIP := checkCurrentIP()
 	currentIP = strings.TrimRight(currentIP, "\n")
 
-	currentRecode := checkCurrentRecode(name, zoneID)
+	currentRecode, currentTTL := checkCurrentRecode(name, zoneID)
 	currentRecode = strings.TrimRight(currentRecode, "\n")
 
 	if currentIP == currentRecode {
 		os.Exit(0)
 	}
 
-	upsertRecode(name, currentIP, zoneID)
+	upsertRecode(name, currentIP, zoneID, currentTTL)
 }
