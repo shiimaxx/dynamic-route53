@@ -23,7 +23,7 @@ func checkCurrentRecode(svc *route53.Route53, name, zoneID string) (string, int6
 	}
 	resp, err := svc.ListResourceRecordSets(params)
 	if err != nil {
-		return "", 0, fmt.Errorf("failed to get resource record.")
+		return "", 0, fmt.Errorf("failed to get resource record")
 	}
 
 	return *resp.ResourceRecordSets[0].ResourceRecords[0].Value, *resp.ResourceRecordSets[0].TTL, nil
@@ -32,13 +32,13 @@ func checkCurrentRecode(svc *route53.Route53, name, zoneID string) (string, int6
 func checkCurrentIP() (string, error) {
 	resp, err := http.Get("http://checkip.amazonaws.com")
 	if err != nil {
-		return "", fmt.Errorf("failed to get current ip.")
+		return "", fmt.Errorf("failed to get current ip")
 	}
 	defer resp.Body.Close()
 
 	byteArray, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return "", fmt.Errorf("failed to read http response.")
+		return "", fmt.Errorf("failed to read http response")
 	}
 
 	return string(byteArray), nil
@@ -69,7 +69,7 @@ func upsertRecode(svc *route53.Route53, name, currentIP, zoneID string, currentT
 
 	_, err := svc.ChangeResourceRecordSets(params)
 	if err != nil {
-		return fmt.Errorf("failed to change recode.")
+		return fmt.Errorf("failed to change recode")
 	}
 	return nil
 }
