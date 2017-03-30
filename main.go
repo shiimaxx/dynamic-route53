@@ -13,7 +13,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/route53"
 )
 
-func checkCurrentRecode(svc *route53.Route53, name, zoneID string) (string, int64) {
+func checkCurrentRecode(svc *route53.Route53, name, zoneID string) (string, int64, error) {
 
 	params := &route53.ListResourceRecordSetsInput{
 		HostedZoneId:    aws.String(zoneID), // Required
@@ -22,24 +22,29 @@ func checkCurrentRecode(svc *route53.Route53, name, zoneID string) (string, int6
 		StartRecordType: aws.String("A"),
 	}
 	resp, err := svc.ListResourceRecordSets(params)
-
 	if err != nil {
-		fmt.Println(err.Error())
-		return "", 0
+		return "", 0, fmt.Errorf("failed to get resource record.")
 	}
 
-	return *resp.ResourceRecordSets[0].ResourceRecords[0].Value, *resp.ResourceRecordSets[0].TTL
+	return *resp.ResourceRecordSets[0].ResourceRecords[0].Value, *resp.ResourceRecordSets[0].TTL, nil
 }
 
-func checkCurrentIP() string {
-	resp, _ := http.Get("http://checkip.amazonaws.com")
+func checkCurrentIP() (string, error) {
+	resp, err := http.Get("http://checkip.amazonaws.com")
+	if err != nil {
+		return "", fmt.Errorf("failed to get current ip.")
+	}
 	defer resp.Body.Close()
 
-	byteArray, _ := ioutil.ReadAll(resp.Body)
-	return string(byteArray)
+	byteArray, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return "", fmt.Errorf("failed to read http response.")
+	}
+
+	return string(byteArray), nil
 }
 
-func upsertRecode(svc *route53.Route53, name, currentIP, zoneID string, currentTTL int64) {
+func upsertRecode(svc *route53.Route53, name, currentIP, zoneID string, currentTTL int64) error {
 	params := &route53.ChangeResourceRecordSetsInput{
 		ChangeBatch: &route53.ChangeBatch{ // Required
 			Changes: []*route53.Change{ // Required
@@ -64,10 +69,9 @@ func upsertRecode(svc *route53.Route53, name, currentIP, zoneID string, currentT
 
 	_, err := svc.ChangeResourceRecordSets(params)
 	if err != nil {
-		fmt.Println(err.Error())
-		return
+		return fmt.Errorf("failed to change recode.")
 	}
-	return
+	return nil
 }
 
 func main() {
@@ -82,15 +86,28 @@ func main() {
 	sess := session.Must(session.NewSession())
 	svc := route53.New(sess)
 
-	currentIP := checkCurrentIP()
+	currentIP, err := checkCurrentIP()
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
 	currentIP = strings.TrimRight(currentIP, "\n")
 
-	currentRecode, currentTTL := checkCurrentRecode(svc, name, zoneID)
+	currentRecode, currentTTL, err := checkCurrentRecode(svc, name, zoneID)
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+
 	currentRecode = strings.TrimRight(currentRecode, "\n")
 
 	if currentIP == currentRecode {
 		os.Exit(0)
 	}
 
-	upsertRecode(svc, name, currentIP, zoneID, currentTTL)
+	err = upsertRecode(svc, name, currentIP, zoneID, currentTTL)
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
 }
