@@ -6,4 +6,4 @@ before_install:
 
 script:
   - gox -output "dist/{{.OS}}_{{.Arch}}_{{.Dir}}"
-  - ghr --username shiimaxx --token $GITHUB_TOKEN --replace --prerelease dist/
+  - ghr --username shiimaxx --token $GITHUB_TOKEN --replace --prerelease pre-release dist/
