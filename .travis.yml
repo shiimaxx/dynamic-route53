@@ -1,0 +1,10 @@
+language: go
+
+before_install:
+  - go get github.com/mitchellh/gox
+  - gox -build-toolchain
+  - go get github.com/tcnksm/ghr
+
+script:
+  - gox -output "dist/{{.OS}}_{{.Arch}}_{{.Dir}}"
+  - ghr --token $GITHUB_TOKEN --replace --prerelease --debug pre-release dist/
