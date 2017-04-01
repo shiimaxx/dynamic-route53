@@ -3,7 +3,7 @@ dynamic-route53
 
 Dynamic DNS using AWS Route53
 
-## Descriptino
+## Description
 
 dynamic-route53 is Dynamic DNS client using AWS Route53.
 
