@@ -21,3 +21,7 @@ Execute specify domain name and zone id.
 ```
 dynamic-route53 --name <DOMAIN NAME> --zone_id <YOURE ZONE ID>
 ```
+
+## Author
+
+[shiimaxx](https://github.com/shiimaxx)
