@@ -1,6 +1,8 @@
 dynamic-route53
 ===============
 
+[![Build Status](https://travis-ci.org/shiimaxx/dynamic-route53.svg?branch=master)](https://travis-ci.org/shiimaxx/dynamic-route53)
+
 Dynamic DNS using AWS Route53
 
 ## Description
