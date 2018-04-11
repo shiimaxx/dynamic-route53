@@ -1,0 +1,8 @@
+package: github.com/shiimaxx/dynamic-route53
+import:
+- package: github.com/aws/aws-sdk-go
+  version: ^1.13.30
+  subpackages:
+  - aws
+  - aws/session
+  - service/route53
